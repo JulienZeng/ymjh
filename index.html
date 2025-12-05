@@ -17,24 +17,20 @@
     .bg-deco{ position:absolute; inset:0; pointer-events:none; z-index:0; }
     .tag{ font-size:.75rem; padding:3px 8px; border-radius:6px; display:inline-block; margin:0 6px 6px 0; white-space:nowrap; font-weight:600; }
     
-    /* === 核心修改：卡片样式 === */
-    /* 1. 设置固定宽度 460px，这是导出图片的基准尺寸 */
-    /* 2. transform-origin 设置为 top center，保证缩放时从顶部居中缩放 */
+    /* === 卡片样式 === */
     #card-preview{ 
       width:460px; 
-      flex-shrink: 0; /* 防止被 flex 容器挤压 */
+      flex-shrink: 0; 
       transform-origin: top center;
-      transition: transform 0.2s ease, margin-bottom 0.2s ease; /* 增加 margin-bottom 的过渡，让高度变化更丝滑 */
+      transition: transform 0.2s ease, margin-bottom 0.2s ease;
     }
 
     .skill-row{border:1px solid #e5e7eb; border-radius:8px; padding:8px; display:flex; align-items:center; gap:8px; background:#fff;}
     .skill-row.active{border-color:#fbbf24; background:#fffbeb;}
-    /* File input pretty (no emoji) */
     .filebox input[type="file"]{ display:none; }
     .filebtn{ display:inline-flex; align-items:center; padding:.5rem .75rem; border-radius:.5rem; background:#0f172a; color:#fff; font-weight:600; font-size:.875rem; }
     .filebtn:hover{ filter:brightness(1.05); }
     .filename{ font-size:.75rem; color:#64748b; margin-left:.5rem; }
-    /* Six-attribute card — flat minimal */
     .qmark{width:22px;height:22px;line-height:22px;text-align:center;
       font-family:"Noto Serif SC","Noto Serif",Georgia,"Times New Roman",serif;
       font-weight:700;font-size:22px;color:#e2e8f0;display:inline-block;}
@@ -46,7 +42,6 @@
     .btn:disabled{ opacity:.7; }
     .xiuwei-badge{ display:inline-flex !important; align-items:center; gap:6px; white-space:nowrap; }
     
-    /* 辅助类：控制显示隐藏 */
     .hidden-force { display: none !important; }
   </style>
 </head>
@@ -604,23 +599,43 @@ updatePreview();
 setTimeout(autoFitCard, 100);
 
 
-// 导出
+// 导出（修复版）
 $('btn').addEventListener('click', async ()=>{
   const btn=$('btn'); const keep=btn.textContent; btn.textContent='生成中...'; btn.disabled=true;
   try{
     const node=$('card-preview');
-    // 导出时先重置缩放，保证导出图片是 460px 原尺寸清晰图，而不是缩小的
+    
+    // 1. 保存当前样式
     const originalTransform = node.style.transform;
     const originalMargin = node.style.marginBottom;
+
+    // 2. 临时重置样式以获取真实尺寸
     node.style.transform = 'none';
     node.style.marginBottom = '0';
+    // 强制高度自动，防止被拉伸
+    node.style.height = 'auto'; 
     
-    // 移除 backgroundColor 选项，确保生成的图片是圆角透明背景
-    const dataUrl = await htmlToImage.toPng(node, { pixelRatio: 3, cacheBust: true });
+    const width = node.offsetWidth;
+    const height = node.offsetHeight;
+
+    // 3. 生成图片，显式指定宽高
+    const dataUrl = await htmlToImage.toPng(node, { 
+        pixelRatio: 3, 
+        cacheBust: true,
+        width: width,
+        height: height,
+        style: {
+            transform: 'none',
+            marginBottom: '0',
+            margin: '0', // 确保没有外边距干扰
+            height: 'auto'
+        }
+    });
     
-    // 导出完恢复缩放
+    // 4. 恢复样式
     node.style.transform = originalTransform;
     node.style.marginBottom = originalMargin;
+    node.style.height = ''; // 清除强制的auto
 
     const a=document.createElement('a'); const name=$('input-name').value; const sect=$('select-sect').value;
     a.download=`一梦江湖_${sect}_${name}_简历卡.png`; a.href=dataUrl; a.click();
