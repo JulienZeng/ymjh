@@ -431,7 +431,7 @@ function updatePreview(){
     document.querySelectorAll('.role-healer').forEach(el=>el.classList.remove('hidden-force'));
     
     // 标签更名
-    $('label-max-attack').textContent = "最大内功";
+    $('label-max-attack').textContent = "最大内功（白）";
     $('label-stat-max-atk').textContent = "内功";
   } else {
     // 默认 DPS
@@ -561,7 +561,7 @@ $('input-avatar').addEventListener('change', updatePreview);
 updatePreview();
 
 
-// 导出
+// 导出（所见即所得）
 $('btn').addEventListener('click', async ()=>{
   const btn=$('btn'); const keep=btn.textContent; btn.textContent='生成中...'; btn.disabled=true;
   try{
